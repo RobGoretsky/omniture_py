@@ -27,18 +27,22 @@ class OmniturePy:
         request.add_header('X-WSSE', self.__get_header())
         return  json.loads(urllib2.urlopen(request).read())
     
-    def run_omtr_queue_and_wait_request(self, method, request_data):
+    def run_omtr_queue_and_wait_request(self, method, request_data,max_polls=20):
         """Send a report request to the Omniture REST API, and wait for its response.  
          Omniture is polled every 10 seconds to determine if the response is ready.  When the response is ready, it is returned.
         Parameters:
         method-- The Omniture Method Name (ex. Report.QueueTrended, Report.QueueOvertime)
         request_data-- Details of method invocation, in Python dictionary/list form.
+        max_polls-- The max number of times that Omniture will be polled to see if the report is ready before failing out.
         """
         status_resp = self.run_omtr_immediate_request(method, request_data)
         report_id = status_resp['reportID']
         status = status_resp['status']
         print "Status for Report ID %s is %s" % (report_id, status)
+        polls=0
         while status != 'done' and status != 'failed':
+            if polls > max_polls:
+                raise Exception("Error:  Exceeded Max Number Of Polling Attempts For Report ID %s" % report_id)
             time.sleep(10)
             status_resp = self.run_omtr_immediate_request('Report.GetStatus', {"reportID" : report_id})
             status = status_resp['status']
