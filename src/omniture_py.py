@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from collections import defaultdict
 import urllib2, time, binascii, sha, json
 
 class OmniturePy:
@@ -49,7 +50,7 @@ class OmniturePy:
             print "Status for Report ID %s is %s" % (report_id, status)
         return self.run_omtr_immediate_request('Report.GetReport', {'reportID' : report_id})
     
-    def get_count_from_report(self, report_suite_id, metric, element=None, selected_element_list=None, date_from=YESTERDAY_DATE, date_to=YESTERDAY_DATE, date_granularity="day"):
+    def get_count_from_report(self, report_suite_id, metric, element=None, selected_element_list=None, date_from=YESTERDAY_DATE, date_to=YESTERDAY_DATE, date_granularity="day", return_one_total_result = True):
         """Send a report request to the Omniture REST API, and return the total count from its response for all selected elements (if any).
         Parameters:
         report_suite_id-- The name of the report suite configured in Omniture
@@ -59,6 +60,7 @@ class OmniturePy:
         date_from-- Optional.  If ommitted, assumed to be yesterday's date.  To set, use date in string form YYYY-MM-DD.
         date_to-- Optional.  If ommitted, assumed to be yesterday's date.  To set, use date in string form YYYY-MM-DD.
         date_granularity--Optional.  If ommitted, assumed to be "day"
+        return_one_total_result --Optional.  If ommitted, assumed to be "True", and a single integer is returned, which is the sum of the metric for the entire date range.  If false, then a dictionary of results is returned, with one result per dat in the date range entered.
         """
         metrics = [{"id":metric}]
         
@@ -83,13 +85,27 @@ class OmniturePy:
             raise Exception("Error:  Full response is %s" % response)
         
         report = response["report"]
-        if selected_element_list == None:
-            return int(report["totals"][0])   #Using the first element here since we only support one metric.  If we want to support more than one metric, would need to handle that here.
         
-        total_for_selected_elements = 0
-        for datum in report["data"]:
-            if datum["name"] in selected_element_list:
-                total_for_selected_elements += int(datum["counts"][0])   #Using the first element here since we only support one metric.  If we want to support more than one metric, would need to handle that here.                   
-        return total_for_selected_elements
+        if return_one_total_result:
+            if selected_element_list == None:
+                return int(report["totals"][0])   #Using the first element here since we only support one metric.  If we want to support more than one metric, would need to handle that here.
+            total_for_selected_elements = 0
+            for datum in report["data"]:
+                if datum["name"] in selected_element_list:
+                    total_for_selected_elements += int(datum["counts"][0])   #Using the first element here since we only support one metric.  If we want to support more than one metric, would need to handle that here.                   
+                    return total_for_selected_elements
         
+        #Handle returning a dictionary of results, with one entry per day.         
+        else:
+            result_dict = defaultdict(int)   #Using a defaultdict here to allow 0 to be set for every value the first time through.  Makes code cleaner for QueueTrended, as we dont need to check the presence of the key first.
+            for datum in report["data"]:
+                if request_type == "Report.QueueOvertime":
+                    result_dict[datum["name"]] = datum["counts"][0]
+                elif request_type == "Report.QueueTrended":
+                    if selected_element_list == None or datum["name"] in selected_element_list:
+                        for day_breakdown in datum["breakdown"]:
+                            result_dict[day_breakdown["name"]] += int(day_breakdown["counts"][0])
+            return result_dict
+            
+    
     
