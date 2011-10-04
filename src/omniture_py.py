@@ -93,7 +93,7 @@ class OmniturePy:
             for datum in report["data"]:
                 if datum["name"] in selected_element_list:
                     total_for_selected_elements += int(datum["counts"][0])   #Using the first element here since we only support one metric.  If we want to support more than one metric, would need to handle that here.                   
-                    return total_for_selected_elements
+            return total_for_selected_elements
         
         #Handle returning a dictionary of results, with one entry per day.         
         else:
