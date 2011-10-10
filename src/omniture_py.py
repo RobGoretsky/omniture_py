@@ -28,26 +28,40 @@ class OmniturePy:
         request.add_header('X-WSSE', self.__get_header())
         return  json.loads(urllib2.urlopen(request).read())
     
-    def run_omtr_queue_and_wait_request(self, method, request_data,max_polls=20):
+    def run_omtr_queue_and_wait_request(self, method, request_data,max_polls=20,max_retries=3):
         """Send a report request to the Omniture REST API, and wait for its response.  
          Omniture is polled every 10 seconds to determine if the response is ready.  When the response is ready, it is returned.
         Parameters:
         method-- The Omniture Method Name (ex. Report.QueueTrended, Report.QueueOvertime)
         request_data-- Details of method invocation, in Python dictionary/list form.
         max_polls-- The max number of times that Omniture will be polled to see if the report is ready before failing out.
+        max_retries-- The max number of times that we allow Omniture to report a failure, and retry this request before throwing an Exception.
         """
-        status_resp = self.run_omtr_immediate_request(method, request_data)
-        report_id = status_resp['reportID']
-        status = status_resp['status']
-        print "Status for Report ID %s is %s" % (report_id, status)
-        polls=0
-        while status != 'done' and status != 'failed':
-            if polls > max_polls:
-                raise Exception("Error:  Exceeded Max Number Of Polling Attempts For Report ID %s" % report_id)
-            time.sleep(10)
-            status_resp = self.run_omtr_immediate_request('Report.GetStatus', {"reportID" : report_id})
+        status, status_resp = "", ""
+        num_retries=0
+        while status != 'done' and num_retries < max_retries:
+            status_resp = self.run_omtr_immediate_request(method, request_data)
+            report_id = status_resp['reportID']
             status = status_resp['status']
             print "Status for Report ID %s is %s" % (report_id, status)
+            polls=0
+            while status != 'done' and status != 'failed':
+                if polls > max_polls:
+                    raise Exception("Error:  Exceeded Max Number Of Polling Attempts For Report ID %s" % report_id)
+                time.sleep(10)
+                status_resp = self.run_omtr_immediate_request('Report.GetStatus', {"reportID" : report_id})
+                status = status_resp['status']
+                print "Status for Report ID %s is %s" % (report_id, status)
+        
+            if status == 'failed':
+                num_retries += 1
+                print "Omniture Reported Failure For Report.  Retrying same request."
+        
+        #We exit the while loop only when the report is done or the report has failed and passed the max retries.        
+        if status == 'failed':
+            raise Exception("Error: Omniture Report Run Failed and passed %s retries.  Full response is %s" % (max_retries, status_resp))
+        
+        #We are all good, return the report
         return self.run_omtr_immediate_request('Report.GetReport', {'reportID' : report_id})
     
     def get_count_from_report(self, report_suite_id, metric, element=None, selected_element_list=None, date_from=YESTERDAY_DATE, date_to=YESTERDAY_DATE, date_granularity="day", return_one_total_result = True):
