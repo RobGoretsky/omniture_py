@@ -33,3 +33,4 @@ The get_count_from_report function currently supports requesting one dimension (
 obj = ompy.run_omtr_queue_and_wait_request('Report.QueueTrended', {"reportDescription" : reportDescription})
 ```
 	
+Full documentation on each of the parameters available to these methods can be found within the code.
