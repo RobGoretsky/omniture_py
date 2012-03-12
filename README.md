@@ -11,7 +11,8 @@ First, get access configured by reading through documentation at [Omniture Devel
 import omniture_py  
 ompy = OmniturePy('username:company','shared_secret')     
 json_object =  ompy.run_omtr_immediate_request('Company.GetReportSuites', '')  
-for suite in json_object["report_suites"]: print "Report Suite ID: %s\nSite Title: %s\n" % (suite["rsid"], suite["site_title"])  
+for suite in json_object["report_suites"]: 
+    print "Report Suite ID: %s\nSite Title: %s\n" % (suite["rsid"], suite["site_title"])  
 ```
 
 To get total number of page views yesterday, just run the following.  It runs an <b>Overtime</b> report in SiteCatalyst, with <b>pageViews</b> as the metric, and returns the numeric total result.  
@@ -26,7 +27,7 @@ To get number of page views for "Homepage" and "Media Guide" combined, yesterday
 print ompy.get_count_from_report('report_suite_name', 'pageViews', 'page', ["Homepage","Media Guide"])
 ```
 
-The get_count_from_report function currently supports requesting one dimension (called an 'element') in addition to the date, which is always implied to be included.  It also only currently supports requesting one metric at a time.  If you wish to have lower-level access to the Omniture API than this, you can just use the run_omtr_queue_and_wait_request, and pass it the type of request and full request body:  
+The get_count_from_report function currently supports requesting one dimension (called an 'element') in addition to the date, which is always implied to be included.  It also only currently supports requesting one metric at a time.  If you wish to have lower-level access to the Omniture API than this, you can just use the run_omtr_queue_and_wait_request, and pass it the type of request and full request body.  This will return a Python object.
 
 ```python
 obj = ompy.run_omtr_queue_and_wait_request('Report.QueueTrended', {"reportDescription" : reportDescription})
