@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Omniture_py : Python SDK For The Omniture SiteCatalyst API" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Omniture_py</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/RobGoretsky/omniture_py">Fork Me on GitHub</a>
+
+          <h1 id="project_title">Omniture_py</h1>
+          <h2 id="project_tagline">Python SDK For The Omniture SiteCatalyst API</h2>
+
+          <section id="downloads">
+            <a class="zip_download_link" href="https://github.com/RobGoretsky/omniture_py/zipball/master">Download this project as a .zip file</a>
+            <a class="tar_download_link" href="https://github.com/RobGoretsky/omniture_py/tarball/master">Download this project as a tar.gz file</a>
+          </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>Omniture_Py</h1>
+
+<h2>A Python Library To Access Omniture's SiteCatalyst Reporting API</h2>
+
+<p>This library simplifies the process of accessing the Omniture SiteCatalyst Reporting API by wrapping the REST API calls in a Python library.</p>
+
+<p>First, get access configured by reading through documentation at <a href="http://developer.omniture.com/">Omniture Developer Connection</a>.  Then, to test authentication/access:  </p>
+
+<div class="highlight">
+<pre><span class="kn">import</span> <span class="nn">omniture_py</span>  
+<span class="n">ompy</span> <span class="o">=</span> <span class="n">OmniturePy</span><span class="p">(</span><span class="s">'username:company'</span><span class="p">,</span><span class="s">'shared_secret'</span><span class="p">)</span>     
+<span class="n">json_object</span> <span class="o">=</span>  <span class="n">ompy</span><span class="o">.</span><span class="n">run_omtr_immediate_request</span><span class="p">(</span><span class="s">'Company.GetReportSuites'</span><span class="p">,</span> <span class="s">''</span><span class="p">)</span>  
+<span class="k">for</span> <span class="n">suite</span> <span class="ow">in</span> <span class="n">json_object</span><span class="p">[</span><span class="s">"report_suites"</span><span class="p">]:</span> 
+    <span class="k">print</span> <span class="s">"Report Suite ID: </span><span class="si">%s</span><span class="se">\n</span><span class="s">Site Title: </span><span class="si">%s</span><span class="se">\n</span><span class="s">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">suite</span><span class="p">[</span><span class="s">"rsid"</span><span class="p">],</span> <span class="n">suite</span><span class="p">[</span><span class="s">"site_title"</span><span class="p">])</span>  
+</pre>
+</div>
+
+
+<p>To get total number of page views yesterday, just run the following.  It runs an <b>Overtime</b> report in SiteCatalyst, with <b>pageViews</b> as the metric, and returns the numeric total result.  </p>
+
+<div class="highlight">
+<pre><span class="k">print</span> <span class="n">ompy</span><span class="o">.</span><span class="n">get_count_from_report</span><span class="p">(</span><span class="s">'report_suite_name'</span><span class="p">,</span> <span class="s">'pageViews'</span><span class="p">)</span> 
+</pre>
+</div>
+
+
+<p>To get number of page views for "Homepage" and "Media Guide" combined, yesterday, run the following.  It runs a <b>Trended</b> report in SiteCatalyst, using <b>pageViews</b> as the metric, and 'page' as the Element, and then selecting for pages titled either "Homepage" or "Media Guide":  </p>
+
+<div class="highlight">
+<pre><span class="k">print</span> <span class="n">ompy</span><span class="o">.</span><span class="n">get_count_from_report</span><span class="p">(</span><span class="s">'report_suite_name'</span><span class="p">,</span> <span class="s">'pageViews'</span><span class="p">,</span> <span class="s">'page'</span><span class="p">,</span> <span class="p">[</span><span class="s">"Homepage"</span><span class="p">,</span><span class="s">"Media Guide"</span><span class="p">])</span>
+</pre>
+</div>
+
+
+<p>The get_count_from_report function currently supports requesting one dimension (called an 'element') in addition to the date, which is always implied to be included.  It also only currently supports requesting one metric at a time.  If you wish to have lower-level access to the Omniture API than this, you can just use the run_omtr_queue_and_wait_request, and pass it the type of request and full request body.  This will return a Python object.</p>
+
+<div class="highlight">
+<pre><span class="n">obj</span> <span class="o">=</span> <span class="n">ompy</span><span class="o">.</span><span class="n">run_omtr_queue_and_wait_request</span><span class="p">(</span><span class="s">'Report.QueueTrended'</span><span class="p">,</span> <span class="p">{</span><span class="s">"reportDescription"</span> <span class="p">:</span> <span class="n">reportDescription</span><span class="p">})</span>
+</pre>
+</div>
+
+
+<p>Full documentation on each of the parameters available to these methods can be found within the code.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Omniture_py maintained by <a href="https://github.com/RobGoretsky">RobGoretsky</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
